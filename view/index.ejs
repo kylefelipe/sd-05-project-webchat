@@ -28,27 +28,20 @@
       </div>
       <div class="logged-users container" id="logged-users">
         <% onlineUsers.forEach(({userId, nickname}) => { %>
-        <div class="pvt-user">
+        <div class="pvt-user" id="div-<%=userId %>">
           <li data-testid="online-user" id="user-<%=userId%>"><%=nickname%></li>
           <button
             class="pvt-button <%=userId %>"
             type="button"
             id="<%=userId %>"
+            data-testid="private"
           >
-            Sigilo
+            Privado
           </button>
         </div>
         <%}) %>
       </div>
       <div class="chat-type">
-        <button
-          class="chat-type-btn"
-          data-testid="private"
-          id="private-btn"
-          type="button"
-        >
-          Privado
-        </button>
         <button
           class="chat-type-btn"
           data-testid="public"
@@ -65,7 +58,6 @@
       const privateBtns = document.querySelectorAll('.pvt-button');
       const loggedUsers = document.querySelector('#logged-users');
       const sendMessage = document.querySelector('#send-message');
-      const privateChat = document.querySelector('#private-btn');
       const changeNick = document.querySelector('#change-nick');
       const messagesUl = document.querySelector('#messages');
       const nickInput = document.querySelector('#nickInput');
@@ -93,17 +85,19 @@
       const showUsers = (id, nick) => {
         const li = document.createElement('li');
         li.setAttribute('data-testid', 'online-user');
-        li.setAttribute('id', `user-${id}`);
+        li.setAttribute('id', `li-${id}`);
         li.innerText = nick;
 
         const privButton = document.createElement('button');
         privButton.setAttribute('type', 'button');
+        privButton.setAttribute('data-testid', 'private');
         privButton.setAttribute('id', id);
         privButton.setAttribute = `pvt-button ${id}`;
-        privButton.innerText = 'Sigilo';
+        privButton.innerText = 'Privado';
 
         const privUser = document.createElement('div');
         privUser.setAttribute('class', 'pvt-user');
+        privUser.setAttribute('id', `div-${id}`);
 
         privButton.addEventListener('click', (e) => {
           targetUsr = e.target.id;
@@ -118,8 +112,8 @@
           loggedUsers.append(privUser);
         }
       };
-      sendMessage.addEventListener('click', (e) => {
-        e.preventDefault();
+
+      sendMessage.addEventListener('click', () => {
         const chatMessage = document.querySelector('#mensagemInput').value;
         const message = {chatMessage, nickname, targetId: targetUsr, userId};
         if (targetUsr) {
@@ -130,8 +124,7 @@
         }
         inputMessage.value = '';
       });
-      changeNick.addEventListener('click', (e) => {
-        e.preventDefault();
+      changeNick.addEventListener('click', () => {
         nickname = nickInput.value;
         if (nickname != '') {
           socket.emit('nickChange', { nickname, userId });
@@ -139,13 +132,12 @@
           nickInput.value = '';
         }
       });
-      privateChat.addEventListener('click', () => {
-        let selectUser = document.querySelectorAll('[data-testid="online-user"]')[1].id;
-        selectUser = selectUser.slice(5) //removento o do id user-
-        targetUsr = selectUser;
-        console.log("usuario: ", selectUser, targetUsr)
-        socket.emit('getPrivate', userId, selectUser);
-      });
+      // privateChat.addEventListener('click', () => {
+      //   let selectUser = document.querySelectorAll('[data-testid="online-user"]')[1].id;
+      //   selectUser = selectUser.slice(5) //removento o do id user-
+      //   targetUsr = selectUser;
+      //   socket.emit('getPrivate', userId, selectUser);
+      // });
 
       publicChat.addEventListener('click', () => {
         targetUsr = null;
@@ -159,7 +151,6 @@
 
       socket.on('userConnected', (id, nick) => showUsers(id, nick));
       socket.on('message', (message) => {
-        console.log("mensagem recebida")
         createMessage(message);
       });
       socket.on('nickChange', (nick, userId) => {
@@ -167,7 +158,7 @@
         ulNick.innerText = nick;
       });
       socket.on('userQuit', (id) => {
-        document.getElementById(id).remove();
+        document.getElementById(`div-${id}`).remove();
       });
       socket.on('privateHistory', (items) => {
         messagesUl.innerHTML = '';
